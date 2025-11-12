@@ -99,8 +99,6 @@ function generateBlocks(){
                     for(let a = y - 1; a <= y + 1; a++)
                         if(-1 < b && b < blockList.length && -1 < a && a < blockList[0].length && blockList[b][a].minesAroundTheBlock !== -1)
                             blockList[b][a].minesAroundTheBlock = blockList[b][a].minesAroundTheBlock + 1;
-
-    return blockList;
 }
 
 function setup(){
@@ -110,7 +108,7 @@ function setup(){
     
     createCanvas(difficulty.width*blockSize, difficulty.height*blockSize);
     
-    blockList = generateBlocks();
+    generateBlocks();
 }
 
 function draw(){
