@@ -1,89 +1,123 @@
 const blockSize = 50;
+let flag;
 var difficulty;
 var blockList;
 
+function preload(){
+    flag = loadImage("/Assets/Flag.png");
+}
+
 //i === 0: Custom, i === 1: Easy, i === 2: Medium, i === 3: Hard
-function setDifficulty(i, bombCount, width, height){
+function setDifficulty(i, mineCount, width, height){
     switch(i){
         case 0:
-            if(height >= 1 && height >= 1)
-                if(bombCount === (width * height) -1)
+            if(width >= 3 && height >= 3)
+                if(mineCount < (width * height))
                     break;
-
+                    
                 else{
-                    console.log("Bomb count can't be higher or equal to", (width * height));
+                    console.log("Mine count needs to be lower than", width * height + "!");
                     return 0;
                 }
-
+            
             else{
-                console.log("Width and Height needs to be higher or equal to 1");
+                console.log("Width and height can't be lower than 3!");
                 return 0;
             }
-
-        case 1:
-            bombCount = 10, width = 10, height = 8; break;
-
-        case 2:
-            bombCount = 40, width = 18, height = 14; break;
-
-        case 3:
-            bombCount = 99, width = 24, height = 20; break;
+        
+        case 1: mineCount = 10, width = 10, height = 8; break;
+        
+        case 2: mineCount = 40, width = 18, height = 14; break;
+        
+        case 3: mineCount = 99, width = 24, height = 20; break;  
     }
 
-    return {bombCount, width, height};
+    return {mineCount, width, height};
 }
 
 function Block(x, y){
     this.x = x;
     this.y = y;
-    this.bombCountAroundTheBlock = 0;
+    //If minesAroundTheBlock = -1 this block is the mine!
+    this.minesAroundTheBlock = 0;
+    this.isRevealed = false;
+    this.isFlaged = false;
 }
 
-function addBlocks(){
-    let blocks = [];
-
-    //Creates a 2D array.
-    for(let y = 0; y < height; y += blockSize){
-        let row = [];
-
-        for(let x = 0; x < width; x += blockSize)
-            row.push(new Block(x, y));
-
-        blocks.push(row);
+Block.prototype.draw = function(ix, iy){
+    if(this.isRevealed){
+        if((iy % 2 === 0 && ix % 2 === 0) || (iy % 2 === 1 && ix % 2 === 1))
+            fill("#1D3100");
+        
+        else
+            fill("#2F4808");
     }
 
-    //Places bombs.
-    for(let bombs = difficulty.bombCount; bombs > 0;){
-        let y = Math.floor(Math.random() * blocks.length);
-        let x = Math.floor(Math.random() * blocks[0].length);
+    else{
+        if((iy % 2 === 0 && ix % 2 === 0) || (iy % 2 === 1 && ix % 2 === 1))
+            fill("#74B01C");
+        
+        else
+            fill("#C7EE8E");
+    }
 
-        if(blocks[y][x].bombCountAroundTheBlock === 0){
-            blocks[y][x].bombCountAroundTheBlock = -1;
-            bombs--;
+    square(this.x, this.y, blockSize);
+
+    if(this.isFlaged)
+        image(flag, this.x, this.y);
+}
+
+function generateBlocks(){
+    blockList = [];
+
+    //Creates a 2D array.
+    for(let x = 0; x < height; x += blockSize){
+        let row = [];
+
+        for(let y = 0; y < width; y += blockSize)
+            row.push(new Block(x, y));
+
+        blockList.push(row);
+    }
+
+    //Places mines.
+    for(let mines = difficulty.mineCount; mines > 0;){
+        let x = floor(random(0, blockList.length));
+        let y = floor(random(0, blockList[0].length));
+
+        if(blockList[x][y].minesAroundTheBlock === 0){
+            blockList[x][y].minesAroundTheBlock = -1;
+            mines--;
         }
     }
 
-    //Calculates bombs around the blocks.
-    for(let y = 0; y < blocks.length; y++)
-        for(let x = 0; x < blocks[0].length; x++)
-            if(blocks[y][x].bombCountAroundTheBlock === -1)
-                for(let b = y - 1; b <= y + 1; b++)
-                    for(let a = x - 1; a <= x + 1; a++)
-                        if(-1 < b && b < blocks.length && -1 < a && a < blocks[0].length && blocks[b][a].bombCountAroundTheBlock !== -1)
-                            blocks[b][a].bombCountAroundTheBlock = blocks[b][a].bombCountAroundTheBlock + 1;
+    //Calculates mines around the blocks.
+    for(let x = 0; x < blockList.length; x++)
+        for(let y = 0; y < blockList[0].length; y++)
+            if(blockList[x][y].minesAroundTheBlock === -1)
+                for(let b = x - 1; b <= x + 1; b++)
+                    for(let a = y - 1; a <= y + 1; a++)
+                        if(-1 < b && b < blockList.length && -1 < a && a < blockList[0].length && blockList[b][a].minesAroundTheBlock !== -1)
+                            blockList[b][a].minesAroundTheBlock = blockList[b][a].minesAroundTheBlock + 1;
 
-    return blocks;
+    return blockList;
 }
 
 function setup(){
+    flag.resize(blockSize, blockSize);
+
     difficulty = setDifficulty(1);
     
-    //Creats a canvas according to the difficulty.
     createCanvas(difficulty.width*blockSize, difficulty.height*blockSize);
     
-    blockList = addBlocks();
+    blockList = generateBlocks();
 }
-   
-function draw(){
 
+function draw(){
+    //Codes in draw() are temporary!
+    noStroke();
+
+    for(let x = 0; x < blockList.length; x++)
+        for(let y = 0; y < blockList[0].length; y++)
+            blockList[x][y].draw(x, y);
 }
